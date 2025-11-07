@@ -37,25 +37,41 @@ body { overflow-x: hidden; }
     .daf-container .mobile { display: block; }
 }
 
-.snowflake {
+.glitter {
     position: fixed;
     top: 0;
-    color: white;
+    border-radius: 50%;
     pointer-events: none;
-    z-index: 9999;
     opacity: 0.9;
-    will-change: transform;
+    will-change: transform, opacity;
+    z-index: 9999;
+}
+
+/* 三種亮片色 */
+.color-gold {
+    background: linear-gradient(135deg, #fff9c4, #d4af37);
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+}
+
+.color-silver {
+    background: linear-gradient(135deg, #ececec, #c0c0c0);
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
 }
 
 @keyframes fall {
     0% {
-        transform: translateY(0) translateX(0) rotate(0deg);
+        transform: translateY(0) translateX(0) rotate(0deg) scale(1);
         opacity: 1;
     }
     100% {
-        transform: translateY(100vh) translateX(var(--drift, 0)) rotate(360deg);
+        transform: translateY(110vh) translateX(var(--drift, 0px)) rotate(720deg) scale(0.85);
         opacity: 0;
     }
+}
+
+@keyframes sparkle {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.8); }
 }
 </style>
 
@@ -68,39 +84,57 @@ body { overflow-x: hidden; }
  
 </div><!-- END .daf-container -->
 <script>
-  function createSnowflake() {
-    const snowflake = document.createElement('div');
-    snowflake.classList.add('snowflake');
-    snowflake.textContent = '❆'; // 可改成其他雪花符號：❄ ❅ ❆
+  /* === 基本設定 === */
+  const SPAWN_INTERVAL_MS = 2500;  // 每2.5秒一批
+  const BATCH_MIN = 3;             // 每批最少亮片
+  const BATCH_MAX = 5;             // 每批最多亮片
+  const FALL_MIN_SEC = 6;          // 飄落最短秒數
+  const FALL_MAX_SEC = 9;         // 飄落最長秒數
+  const SIZE_MIN = 8;              // 最小亮片直徑
+  const SIZE_MAX = 16;             // 最大亮片直徑
+  const colors = ['color-silver', 'color-gold'];
 
-    // 隨機大小
-    const size = Math.random() * 20 + 10; // 10px ~ 30px
-    snowflake.style.fontSize = size + 'px';
+  /* === 產生亮片 === */
+  function createGlitter() {
+    const g = document.createElement('div');
+    g.classList.add('glitter', colors[Math.floor(Math.random() * colors.length)]);
+
+    const size = Math.random() * (SIZE_MAX - SIZE_MIN) + SIZE_MIN;
+    g.style.width = `${size}px`;
+    g.style.height = `${size}px`;
 
     // 隨機起始位置
-    snowflake.style.left = Math.random() * window.innerWidth + 'px';
+    g.style.left = Math.random() * (window.innerWidth - size) + 'px';
 
-    // 隨機漂移（左右飄動距離）
-    const drift = (Math.random() - 0.5) * 200; // -100 ~ 100px
-    snowflake.style.setProperty('--drift', drift + 'px');
+    // 隨機橫向漂移量
+    const randomDrift = (Math.random() - 0.5) * 160; // -80 ~ +80 px
+    g.style.setProperty('--drift', `${randomDrift}px`);
 
-    // 隨機飄落時間（越大越慢）
-    const duration = Math.random() * 5 + 5; // 5~10秒
-    snowflake.style.animation = `fall ${duration}s linear forwards`;
+    // 飄落時間與閃爍
+    const fallDuration = (Math.random() * (FALL_MAX_SEC - FALL_MIN_SEC) + FALL_MIN_SEC).toFixed(2) + 's';
+    const delay = (Math.random() * 0.8).toFixed(2) + 's';
 
-    // 隨機透明度
-    snowflake.style.opacity = Math.random() * 0.5 + 0.5;
+    g.style.animation = `
+      fall ${fallDuration} linear forwards ${delay},
+      sparkle 1.5s ease-in-out infinite
+    `;
 
-    document.body.appendChild(snowflake);
+    document.body.appendChild(g);
 
-    // 移除離開畫面的雪花
-    setTimeout(() => {
-      snowflake.remove();
-    }, duration * 1000);
+    setTimeout(() => g.remove(), (parseFloat(fallDuration) + parseFloat(delay)) * 1000);
   }
 
-  // 不斷產生雪花
-  setInterval(createSnowflake, 300);
+  /* === 批次產生 === */
+  function spawnBatch() {
+    const count = Math.floor(Math.random() * (BATCH_MAX - BATCH_MIN + 1)) + BATCH_MIN;
+    for (let i = 0; i < count; i++) {
+      setTimeout(() => createGlitter(), Math.random() * 300);
+    }
+  }
+
+  /* 自動執行 */
+  spawnBatch();
+  setInterval(spawnBatch, SPAWN_INTERVAL_MS);
 </script>
 <!-- 內容結束 -->
 
